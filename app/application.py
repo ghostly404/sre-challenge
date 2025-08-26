@@ -1,17 +1,24 @@
-import sqlite3
 import logging
 from flask import Flask, session, redirect, url_for, request, render_template, abort
-
+import psycopg2 #postgress
+import os
+import psycopg2.extras #extra postgress utility
 
 app = Flask(__name__)
 app.secret_key = b"192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf"
 app.logger.setLevel(logging.INFO)
 
 
-def get_db_connection():
-    connection = sqlite3.connect("database.db")
-    connection.row_factory = sqlite3.Row
-    return connection
+def get_db_connection(): #connectie met de postgresdatabase
+    conn = psycopg2.connect(
+        host=os.environ["DB_HOST"],
+        port=os.environ["DB_PORT"],
+        database=os.environ["DB_NAME"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"]
+    )
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor) #psycopg2 werkt met cursor daarom nodig
+    return conn, cursor
 
 
 def is_authenticated():
@@ -21,9 +28,12 @@ def is_authenticated():
 
 
 def authenticate(username, password):
-    connection = get_db_connection()
-    users = connection.execute("SELECT * FROM users").fetchall()
-    connection.close()
+    #iets aangepast zodat de connectie met postgres werkt ipv sqlite
+    conn, cur = get_db_connection()
+    cur.execute("SELECT * FROM users;")
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
 
     for user in users:
         if user["username"] == username and user["password"] == password:
@@ -38,7 +48,6 @@ def authenticate(username, password):
 @app.route("/")
 def index():
     return render_template("index.html", is_authenticated=is_authenticated())
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
