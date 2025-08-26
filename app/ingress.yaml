@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: warpnet-sre-ingress
+spec:
+  rules:
+    - host: sre-app.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sre-app-service
+                port:
+                  number: 80
