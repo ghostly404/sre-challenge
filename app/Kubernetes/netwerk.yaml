@@ -1,0 +1,56 @@
+# standaard alles deny
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+
+#ingress controller -> sre app
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-app
+spec:
+  podSelector:
+    matchLabels:
+      app: sre-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - namespaceSelector: {}
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+
+
+
+---
+# allow sre pods -> Postgres
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: 
+  name: allow-app-naar-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: sre-app
+      ports:
+        - protocol: TCP
+          port: 5432
+
