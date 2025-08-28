@@ -37,6 +37,18 @@ spec:
                   key: POSTGRES_PASSWORD
           ports:
             - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 20
 ---
 
 apiVersion: v1
